@@ -15,8 +15,8 @@
     <PackageReference Include="Microsoft.Data.Services.Client" version="5.8.5" />
     <PackageReference Include="Microsoft.WindowsAzure.ConfigurationManager" version="3.2.3" />
     <PackageReference Include="ncrontab" version="1.0.0" />
-    <PackageReference Include="Newtonsoft.Json" version="11.0.2" />
     <PackageReference Include="System.Spatial" version="5.8.5" />
+    <PackageReference Include="System.Text.Json" Version="6.0.4" />
     <PackageReference Include="WindowsAzure.Storage" version="9.3.3" />
   </ItemGroup>
 
