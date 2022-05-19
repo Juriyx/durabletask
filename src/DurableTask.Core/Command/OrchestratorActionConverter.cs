@@ -14,32 +14,32 @@
 namespace DurableTask.Core.Command
 {
     using System;
-    using Newtonsoft.Json.Linq;
+    using System.Text.Json;
     using DurableTask.Core.Serializing;
 
     internal class OrchestrationActionConverter : JsonCreationConverter<OrchestratorAction>
     {
-        protected override OrchestratorAction CreateObject(Type objectType, JObject jObject)
+        protected override Type GetObjectType(JsonElement element, JsonSerializerOptions options)
         {
-            if (jObject.TryGetValue("OrchestratorActionType", StringComparison.OrdinalIgnoreCase, out JToken actionType))
+            if (element.TryGetProperty(nameof(OrchestratorAction.OrchestratorActionType), out JsonElement property))
             {
-                var type = (OrchestratorActionType)int.Parse((string)actionType);
-                switch (type)
-                {
-                    case OrchestratorActionType.CreateTimer:
-                        return new CreateTimerOrchestratorAction();
-                    case OrchestratorActionType.OrchestrationComplete:
-                        return new OrchestrationCompleteOrchestratorAction();
-                    case OrchestratorActionType.ScheduleOrchestrator:
-                        return new ScheduleTaskOrchestratorAction();
-                    case OrchestratorActionType.CreateSubOrchestration:
-                        return new CreateSubOrchestrationAction();
-                    default:
-                        throw new NotSupportedException("Unrecognized action type.");
-                }
+                return GetObjectType(property.Deserialize<OrchestratorActionType>(options));
             }
 
             throw new NotSupportedException("Action Type not provided.");
         }
+
+        protected override Type GetObjectType(OrchestratorAction value)
+            => GetObjectType(value.OrchestratorActionType);
+
+        private static Type GetObjectType(OrchestratorActionType actionType)
+            => actionType switch
+            {
+                OrchestratorActionType.CreateTimer => typeof(CreateTimerOrchestratorAction),
+                OrchestratorActionType.OrchestrationComplete => typeof(OrchestrationCompleteOrchestratorAction),
+                OrchestratorActionType.ScheduleOrchestrator => typeof(ScheduleTaskOrchestratorAction),
+                OrchestratorActionType.CreateSubOrchestration => typeof(CreateSubOrchestrationAction),
+                _ => throw new NotSupportedException("Unrecognized action type."),
+            };
     }
 }

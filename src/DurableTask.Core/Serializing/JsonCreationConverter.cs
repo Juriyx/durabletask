@@ -14,47 +14,47 @@
 namespace DurableTask.Core.Serializing
 {
     using System;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
 
     /// <summary>
     ///     Helper class for supporting deserialization from JSON into a custom class hierarchy
     /// </summary>
-    internal abstract class JsonCreationConverter<T> : JsonConverter where T : class
+    internal abstract class JsonCreationConverter<T> : JsonConverter<T> where T : class
     {
-        public override bool CanWrite => false;
-
         public override bool CanConvert(Type objectType)
         {
             return typeof(T).IsAssignableFrom(objectType);
         }
 
-        public override object ReadJson(JsonReader reader, Type objectType, object existingValue,
-            JsonSerializer serializer)
+        // Note: These methods only work as long as the converter is not used for the "object type" directly
+
+        public override T Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
         {
-            if (reader.TokenType != JsonToken.StartObject)
+            if (reader.TokenType != JsonTokenType.StartObject)
             {
                 return null;
             }
 
-            JObject value = JObject.Load(reader);
+            JsonElement value = JsonElement.ParseValue(ref reader);
 
-            // Create target object based on JObject 
-            T target = CreateObject(objectType, value);
+            // Create target object based on JsonElement 
+            Type targetType = GetObjectType(value, options);
 
-            serializer.Populate(value.CreateReader(), target);
-
-            return target;
+            return (T)value.Deserialize(targetType, options);
         }
 
-        public override void WriteJson(JsonWriter writer, object value, JsonSerializer serializer)
-        {
-            throw new NotSupportedException();
-        }
+        public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
+            => JsonSerializer.Serialize(writer, value, GetObjectType(value), options);
 
         /// <summary>
-        ///     Create an instance of objectType, based properties in the JSON object
+        ///     Gets the objectType based on properties in the JSON object
         /// </summary>
-        protected abstract T CreateObject(Type objectType, JObject jObject);
+        protected abstract Type GetObjectType(JsonElement jObject, JsonSerializerOptions options);
+
+        /// <summary>
+        ///     Gets the objectType based on the value.
+        /// </summary>
+        protected abstract Type GetObjectType(T value);
     }
 }

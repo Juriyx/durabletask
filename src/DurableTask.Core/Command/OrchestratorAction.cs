@@ -13,7 +13,7 @@
 #nullable enable
 namespace DurableTask.Core.Command
 {
-    using Newtonsoft.Json;
+    using System.Text.Json.Serialization;
 
     /// <summary>
     /// Defines a set of base properties for an orchestrator action.
