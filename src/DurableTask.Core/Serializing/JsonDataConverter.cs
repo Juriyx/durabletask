@@ -14,10 +14,8 @@
 namespace DurableTask.Core.Serializing
 {
     using System;
-    using System.Globalization;
-    using System.IO;
-    using System.Text;
-    using Newtonsoft.Json;
+    using System.Text.Json;
+    using DurableTask.Core.Common;
 
     /// <summary>
     /// Class for serializing and deserializing data to and from json
@@ -29,50 +27,48 @@ namespace DurableTask.Core.Serializing
         /// </summary>
         public static readonly JsonDataConverter Default = new JsonDataConverter();
 
-        readonly JsonSerializer serializer;
+        readonly JsonSerializerOptions _options;
+        readonly JsonSerializerOptions _indentedOptions;
 
         /// <summary>
-        /// Creates a new instance of the JsonDataConverter with default settings
+        /// Creates a new instance of the <see cref="JsonDataConverter"/> with default settings
         /// </summary>
         public JsonDataConverter()
-            : this(new JsonSerializerSettings
-            {
-                TypeNameHandling = TypeNameHandling.Objects,
-                DateParseHandling = DateParseHandling.None,
-#if NETSTANDARD2_0
-                SerializationBinder = new PackageUpgradeSerializationBinder()
-#else
-                Binder = new PackageUpgradeSerializationBinder()
-#endif
-            })
+            : this(Utils.DefaultSerializerOptions)
         { }
 
         /// <summary>
-        /// Creates a new instance of the JsonDataConverter with supplied settings
+        /// Creates a new instance of the <see cref="JsonDataConverter"/> with supplied settings
         /// </summary>
-        /// <param name="settings">Settings for the json serializer</param>
-        public JsonDataConverter(JsonSerializerSettings settings)
+        /// <param name="options">Options for the json serializer</param>
+        public JsonDataConverter(JsonSerializerOptions options)
         {
-            this.serializer = JsonSerializer.Create(settings);
+            if (options == null)
+            {
+                throw new ArgumentNullException(nameof(options));
+            }
+
+            _options = new JsonSerializerOptions(options) { WriteIndented = false };
+            _indentedOptions = new JsonSerializerOptions(options) { WriteIndented = true };
         }
 
         /// <summary>
-        /// Serialize an Object to string with default formatting
+        /// Serialize an object to a string with default formatting using the specified type
         /// </summary>
         /// <param name="value">Object to serialize</param>
+        /// <param name="type">The type used when serializing.</param>
         /// <returns>Object serialized to a string</returns>
-        public override string Serialize(object value)
-        {
-            return Serialize(value, false);
-        }
+        public override string Serialize(object value, Type type)
+            => Serialize(value, type, false);
 
         /// <summary>
-        /// Serialize an Object to string with supplied formatting
+        /// Serialize an object to a string with supplied formatting using the specified type
         /// </summary>
         /// <param name="value">Object to serialize</param>
+        /// <param name="type">The type used when serializing.</param>
         /// <param name="formatted">Boolean indicating whether to format the results or not</param>
         /// <returns>Object serialized to a string</returns>
-        public override string Serialize(object value, bool formatted)
+        public override string Serialize(object value, Type type, bool formatted)
         {
             if (value == null)
             {
@@ -80,15 +76,7 @@ namespace DurableTask.Core.Serializing
                 return null;
             }
 
-            var sb = new StringBuilder(0x100);
-            using (var textWriter = new StringWriter(sb, CultureInfo.InvariantCulture))
-            using (var writer = new JsonTextWriter(textWriter))
-            {
-                writer.Formatting = (formatted ? Formatting.Indented : Formatting.None);
-                this.serializer.Serialize(writer, value);
-            
-                return textWriter.ToString();
-            }
+            return JsonSerializer.Serialize(value, type, formatted ? _indentedOptions : _options);
         }
 
         /// <summary>
@@ -104,11 +92,7 @@ namespace DurableTask.Core.Serializing
                 return null;
             }
 
-            using (var reader = new StringReader(data))
-            using (var jsonTextReader = new JsonTextReader(reader))
-            {
-                return this.serializer.Deserialize(jsonTextReader, objectType);
-            }
+            return JsonSerializer.Deserialize(data, objectType);
         }
     }
 }

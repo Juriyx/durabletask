@@ -19,14 +19,13 @@ namespace DurableTask.Core.Common
     using System.IO.Compression;
     using System.Runtime.ExceptionServices;
     using System.Text;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.Core.Exceptions;
     using DurableTask.Core.History;
     using DurableTask.Core.Serializing;
     using DurableTask.Core.Tracing;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Utility Methods
@@ -48,15 +47,10 @@ namespace DurableTask.Core.Common
         /// </summary>
         internal static readonly string PackageVersion = FileVersionInfo.GetVersionInfo(typeof(TaskOrchestration).Assembly.Location).FileVersion;
 
-        private static readonly JsonSerializerSettings ObjectJsonSettings = new JsonSerializerSettings
+        internal static readonly JsonSerializerOptions DefaultSerializerOptions = new JsonSerializerOptions
         {
-            TypeNameHandling = TypeNameHandling.All,
-
-#if NETSTANDARD2_0
-            SerializationBinder = new PackageUpgradeSerializationBinder()
-#else
-            Binder = new PackageUpgradeSerializationBinder()
-#endif
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
         };
 
         /// <summary>
@@ -92,16 +86,12 @@ namespace DurableTask.Core.Common
             return input;
         }
 
-        internal static JArray ConvertToJArray(string input)
+        internal static JsonElement ConvertToJsonArray(string input)
         {
-            JArray jArray;
-            using (var stringReader = new StringReader(input))
-            using (var jsonTextReader = new JsonTextReader(stringReader) { DateParseHandling = DateParseHandling.None })
-            {
-                jArray = JArray.Load(jsonTextReader);
-            }
-
-            return jArray;
+            JsonElement element = JsonSerializer.Deserialize<JsonElement>(input, DefaultSerializerOptions);
+            return element.ValueKind == JsonValueKind.Array
+                ? element
+                : throw new JsonException($"Expected a JSON array but found {element.ValueKind} instead.");
         }
 
         /// <summary>
@@ -114,7 +104,7 @@ namespace DurableTask.Core.Common
                 throw new ArgumentException("stream is not seekable or writable", nameof(objectStream));
             }
 
-            byte[] serializedBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj, ObjectJsonSettings));
+            byte[] serializedBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj, ObjectJsonOptions));
 
             objectStream.Write(serializedBytes, 0, serializedBytes.Length);
             objectStream.Position = 0;
@@ -177,7 +167,7 @@ namespace DurableTask.Core.Common
         {
             return JsonConvert.DeserializeObject<T>(
                                 Encoding.UTF8.GetString(serializedBytes),
-                                ObjectJsonSettings);
+                                ObjectJsonOptions);
         }
 
         /// <summary>

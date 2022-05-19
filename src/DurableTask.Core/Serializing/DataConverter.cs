@@ -21,19 +21,40 @@ namespace DurableTask.Core.Serializing
     public abstract class DataConverter
     {
         /// <summary>
-        /// Serialize an Object to string with default formatting
+        /// Serialize a value of type <typeparamref name="T"/> to a string with default formatting
         /// </summary>
-        /// <param name="value">Object to serialize</param>
+        /// <typeparam name="T">The desired type to serialize.</typeparam>
+        /// <param name="value">Value to serialize</param>
         /// <returns>Object serialized to a string</returns>
-        public abstract string Serialize(object value);
+        public virtual string Serialize<T>(T value)
+            => Serialize(value, typeof(T));
 
         /// <summary>
-        /// Serialize an Object to string with supplied formatting
+        /// Serialize a value of type <typeparamref name="T"/> to a string with supplied formatting
         /// </summary>
-        /// <param name="value">Object to serialize</param>
+        /// <typeparam name="T">The desired type to serialize.</typeparam>
+        /// <param name="value">Value to serialize</param>
         /// <param name="formatted">Boolean indicating whether to format the results or not</param>
         /// <returns>Object serialized to a string</returns>
-        public abstract string Serialize(object value, bool formatted);
+        public virtual string Serialize<T>(T value, bool formatted)
+            => Serialize(value, typeof(T), formatted);
+
+        /// <summary>
+        /// Serialize an object to a string with default formatting using the specified type
+        /// </summary>
+        /// <param name="value">Object to serialize</param>
+        /// <param name="type">The type used when serializing.</param>
+        /// <returns>Object serialized to a string</returns>
+        public abstract string Serialize(object value, Type type);
+
+        /// <summary>
+        /// Serialize an object to a string with supplied formatting using the specified type
+        /// </summary>
+        /// <param name="value">Object to serialize</param>
+        /// <param name="type">The type used when serializing.</param>
+        /// <param name="formatted">Boolean indicating whether to format the results or not</param>
+        /// <returns>Object serialized to a string</returns>
+        public abstract string Serialize(object value, Type type, bool formatted);
 
         /// <summary>
         /// Deserialize a string to an Object of supplied type
@@ -49,15 +70,10 @@ namespace DurableTask.Core.Serializing
         /// <param name="data">String data of the Object to deserialize</param>
         /// <typeparam name="T">Type to deserialize to</typeparam>
         /// <returns>Deserialized Object</returns>
-        public T Deserialize<T>(string data)
+        public virtual T Deserialize<T>(string data)
         {
             object result = this.Deserialize(data, typeof(T));
-            if (result == null)
-            {
-                return default(T);
-            }
-
-            return (T)result;
+            return result == null ? default : (T)result;
         }
     }
 }
