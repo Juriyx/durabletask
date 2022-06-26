@@ -21,9 +21,9 @@ namespace DurableTask.Core
     using DurableTask.Core.History;
     using DurableTask.Core.Serializing;
 
-/// <summary>
-/// Wire level transport object for task messages containing events and orchestration instance information
-/// </summary>
+    /// <summary>
+    /// Wire level transport object for task messages containing events and orchestration instance information
+    /// </summary>
     [DataContract]
     public class TaskMessage : IExtensibleDataObject
     {

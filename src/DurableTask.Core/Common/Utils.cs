@@ -51,7 +51,7 @@ namespace DurableTask.Core.Common
         /// </summary>
         internal static readonly string PackageVersion = FileVersionInfo.GetVersionInfo(typeof(TaskOrchestration).Assembly.Location).FileVersion;
 
-        internal static readonly JsonSerializerOptions DefaultSerializerOptions = new JsonSerializerOptions
+        internal static readonly JsonSerializerOptions InternalSerializerOptions = new JsonSerializerOptions
         {
             PropertyNameCaseInsensitive = true,
             ReadCommentHandling = JsonCommentHandling.Skip,
@@ -92,7 +92,7 @@ namespace DurableTask.Core.Common
 
         internal static JsonElement ConvertToJsonArray(string input)
         {
-            JsonElement element = JsonSerializer.Deserialize<JsonElement>(input, DefaultSerializerOptions);
+            JsonElement element = JsonSerializer.Deserialize<JsonElement>(input, InternalSerializerOptions);
             return element.ValueKind == JsonValueKind.Array
                 ? element
                 : throw new JsonException($"Expected a JSON array but found {element.ValueKind} instead.");
@@ -110,7 +110,7 @@ namespace DurableTask.Core.Common
 
 
             using (Utf8JsonWriter writer = new Utf8JsonWriter(objectStream))
-                JsonSerializer.Serialize(obj, DefaultSerializerOptions);
+                JsonSerializer.Serialize(obj, InternalSerializerOptions);
 
             objectStream.Position = 0;
         }
@@ -171,7 +171,7 @@ namespace DurableTask.Core.Common
         public static T ReadObjectFromUtf8Json<T>(byte[] serializedBytes)
         {
             Utf8JsonReader reader = new Utf8JsonReader(serializedBytes, new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
-            return JsonSerializer.Deserialize<T>(ref reader, DefaultSerializerOptions);
+            return JsonSerializer.Deserialize<T>(ref reader, InternalSerializerOptions);
         }
 
         /// <summary>

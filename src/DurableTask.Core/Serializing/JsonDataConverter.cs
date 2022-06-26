@@ -34,7 +34,7 @@ namespace DurableTask.Core.Serializing
         /// Creates a new instance of the <see cref="JsonDataConverter"/> with default settings
         /// </summary>
         public JsonDataConverter()
-            : this(Utils.DefaultSerializerOptions)
+            : this(Utils.InternalSerializerOptions)
         { }
 
         /// <summary>

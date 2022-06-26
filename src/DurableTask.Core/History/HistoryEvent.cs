@@ -26,6 +26,7 @@ namespace DurableTask.Core.History
     /// </summary>
     [DataContract]
     [KnownType(nameof(KnownTypes))]
+    [JsonConverter(typeof(HistoryEventConverter))]
     public abstract class HistoryEvent : IExtensibleDataObject
     {
         private static IReadOnlyCollection<Type>? knownTypes;

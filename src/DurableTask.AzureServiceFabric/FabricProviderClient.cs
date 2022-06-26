@@ -23,16 +23,15 @@ namespace DurableTask.AzureServiceFabric
     using DurableTask.AzureServiceFabric.Stores;
     using Microsoft.ServiceFabric.Data;
     using Newtonsoft.Json;
+    using System.Text.Json;
 
     internal class FabricProviderClient : IFabricProviderClient
     {
-        readonly IReliableStateManager stateManager;
         readonly SessionProvider orchestrationProvider;
-        readonly JsonDataConverter FormattingConverter = new JsonDataConverter(new JsonSerializerSettings() { Formatting = Formatting.Indented });
+        readonly JsonDataConverter FormattingConverter = new JsonDataConverter();
 
-        public FabricProviderClient(IReliableStateManager stateManager, SessionProvider orchestrationProvider)
+        public FabricProviderClient(SessionProvider orchestrationProvider)
         {
-            this.stateManager = stateManager ?? throw new ArgumentNullException(nameof(stateManager));
             this.orchestrationProvider = orchestrationProvider ?? throw new ArgumentNullException(nameof(orchestrationProvider));
         }
 
@@ -49,7 +48,7 @@ namespace DurableTask.AzureServiceFabric
             {
                 throw new ArgumentException($"There is no running or pending Orchestration with the instanceId {instanceId}");
             }
-            return FormattingConverter.Serialize(session.SessionState);
+            return FormattingConverter.Serialize(session.SessionState,formatted: true);
         }
     }
 }

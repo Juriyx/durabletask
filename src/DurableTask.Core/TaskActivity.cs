@@ -116,7 +116,7 @@ namespace DurableTask.Core
             if (parameterCount == 1)
             {
                 JsonElement element = jsonArray[0];
-                parameter = element.Deserialize<TInput>(Utils.DefaultSerializerOptions);
+                parameter = element.Deserialize<TInput>(Utils.InternalSerializerOptions);
             }
 
             TResult result;

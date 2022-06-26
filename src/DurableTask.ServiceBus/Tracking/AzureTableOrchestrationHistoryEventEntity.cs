@@ -15,31 +15,21 @@ namespace DurableTask.ServiceBus.Tracking
 {
     using System;
     using System.Collections.Generic;
+    using System.Text.Json;
     using DurableTask.Core.History;
-    using DurableTask.Core.Serializing;
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Newtonsoft.Json;
 
     /// <summary>
     /// History Tracking entity for orchestration history events
     /// </summary>
     public class AzureTableOrchestrationHistoryEventEntity : AzureTableCompositeTableEntity
     {
-        private static readonly JsonSerializerSettings WriteJsonSettings = new JsonSerializerSettings
+        private static readonly JsonSerializerOptions JsonOptions = new JsonSerializerOptions
         {
-            Formatting = Formatting.Indented,
-            TypeNameHandling = TypeNameHandling.Objects
-        };
-
-        private static readonly JsonSerializerSettings ReadJsonSettings = new JsonSerializerSettings
-        {
-            TypeNameHandling = TypeNameHandling.Objects,
-#if NETSTANDARD2_0
-            SerializationBinder = new PackageUpgradeSerializationBinder()
-#else
-            Binder = new PackageUpgradeSerializationBinder()
-#endif
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            WriteIndented = true,
         };
 
         /// <summary>
@@ -116,7 +106,7 @@ namespace DurableTask.ServiceBus.Tracking
         /// <param name="operationContext">The operation context</param>
         public override IDictionary<string, EntityProperty> WriteEntity(OperationContext operationContext)
         {
-            string serializedHistoryEvent = JsonConvert.SerializeObject(HistoryEvent, WriteJsonSettings);
+            string serializedHistoryEvent = JsonSerializer.Serialize(HistoryEvent, JsonOptions);
 
             // replace with a generic event with the truncated history so at least we have some record
             // note that this makes the history stored in the instance store unreplayable. so any replay logic
@@ -124,9 +114,9 @@ namespace DurableTask.ServiceBus.Tracking
             if (!string.IsNullOrWhiteSpace(serializedHistoryEvent) &&
                 serializedHistoryEvent.Length > ServiceBusConstants.MaxStringLengthForAzureTableColumn)
             {
-                serializedHistoryEvent = JsonConvert.SerializeObject(new GenericEvent(HistoryEvent.EventId,
+                serializedHistoryEvent = JsonSerializer.Serialize(new GenericEvent(HistoryEvent.EventId,
                     serializedHistoryEvent.Substring(0, ServiceBusConstants.MaxStringLengthForAzureTableColumn) + " ....(truncated)..]"),
-                    WriteJsonSettings);
+                    JsonOptions);
             }
 
             var returnValues = new Dictionary<string, EntityProperty>();
@@ -156,7 +146,7 @@ namespace DurableTask.ServiceBus.Tracking
                     .DateTime;
 
             string serializedHistoryEvent = GetValue("HistoryEvent", properties, property => property.StringValue);
-            HistoryEvent = JsonConvert.DeserializeObject<HistoryEvent>(serializedHistoryEvent, ReadJsonSettings);
+            HistoryEvent = JsonSerializer.Deserialize<HistoryEvent>(serializedHistoryEvent, JsonOptions);
         }
 
         /// <summary>

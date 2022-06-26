@@ -44,7 +44,7 @@ namespace DurableTask.AzureServiceFabric
             var instanceStore = new FabricOrchestrationInstanceStore(stateManager, cancellationTokenSource.Token);
             this.orchestrationService = new FabricOrchestrationService(stateManager, sessionProvider, instanceStore, settings, cancellationTokenSource);
             this.orchestrationClient = new FabricOrchestrationServiceClient(stateManager, sessionProvider, instanceStore);
-            this.fabricProviderClient = new FabricProviderClient(stateManager, sessionProvider);
+            this.fabricProviderClient = new FabricProviderClient(sessionProvider);
         }
 
         /// <summary>
