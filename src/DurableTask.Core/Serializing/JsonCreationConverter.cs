@@ -50,7 +50,7 @@ namespace DurableTask.Core.Serializing
         /// <summary>
         ///     Gets the objectType based on properties in the JSON object
         /// </summary>
-        protected abstract Type GetObjectType(JsonElement jObject, JsonSerializerOptions options);
+        protected abstract Type GetObjectType(JsonElement element, JsonSerializerOptions options);
 
         /// <summary>
         ///     Gets the objectType based on the value.

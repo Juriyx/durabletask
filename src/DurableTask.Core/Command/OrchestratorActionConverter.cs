@@ -26,7 +26,7 @@ namespace DurableTask.Core.Command
                 return GetObjectType(property.Deserialize<OrchestratorActionType>(options));
             }
 
-            throw new NotSupportedException("Action Type not provided.");
+            throw new JsonException("Action Type not provided.");
         }
 
         protected override Type GetObjectType(OrchestratorAction value)
@@ -39,7 +39,7 @@ namespace DurableTask.Core.Command
                 OrchestratorActionType.OrchestrationComplete => typeof(OrchestrationCompleteOrchestratorAction),
                 OrchestratorActionType.ScheduleOrchestrator => typeof(ScheduleTaskOrchestratorAction),
                 OrchestratorActionType.CreateSubOrchestration => typeof(CreateSubOrchestrationAction),
-                _ => throw new NotSupportedException("Unrecognized action type."),
+                _ => throw new JsonException("Unrecognized action type."),
             };
     }
 }

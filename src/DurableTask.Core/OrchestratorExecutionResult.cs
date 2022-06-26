@@ -15,8 +15,10 @@ namespace DurableTask.Core
 {
     using System;
     using System.Collections.Generic;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
     using DurableTask.Core.Command;
-    using Newtonsoft.Json;
+    using DurableTask.Core.Common;
 
     /// <summary>
     /// The result of an orchestration execution.
@@ -26,13 +28,13 @@ namespace DurableTask.Core
         /// <summary>
         /// The list of actions resulting from the orchestrator execution.
         /// </summary>
-        [JsonProperty("actions")]
+        [JsonPropertyName("actions")]
         public IEnumerable<OrchestratorAction> Actions { get; set; } = Array.Empty<OrchestratorAction>();
 
         /// <summary>
         /// The custom status, if any, of the orchestrator.
         /// </summary>
-        [JsonProperty("customStatus")]
+        [JsonPropertyName("customStatus")]
         public string? CustomStatus { get; set; }
 
         /// <summary>
@@ -61,7 +63,7 @@ namespace DurableTask.Core
                     new OrchestrationCompleteOrchestratorAction
                     {
                         OrchestrationStatus = OrchestrationStatus.Failed,
-                        Result = JsonConvert.SerializeObject(new { message, details }),
+                        Result = JsonSerializer.Serialize(new { message, details }, Utils.DefaultSerializerOptions),
                     },
                 },
             };

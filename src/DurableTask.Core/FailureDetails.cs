@@ -15,8 +15,8 @@ namespace DurableTask.Core
 {
     using System;
     using System.Runtime.Serialization;
+    using System.Text.Json.Serialization;
     using DurableTask.Core.Exceptions;
-    using Newtonsoft.Json;
 
     /// <summary>
     /// Details of an activity or orchestration failure.

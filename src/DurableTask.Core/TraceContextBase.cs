@@ -16,14 +16,13 @@ namespace DurableTask.Core
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Linq;
-    using System.Reflection;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
 
     /// <summary>
     /// TraceContext keep the correlation value.
     /// </summary>
+    [JsonConverter(typeof(TraceContextConverter))]
     public abstract class TraceContextBase
     {
         /// <summary>
@@ -36,14 +35,17 @@ namespace DurableTask.Core
 
         static TraceContextBase()
         {
-            CustomJsonSerializerSettings = new JsonSerializerSettings()
+            CustomJsonSerializerOptions = new JsonSerializerOptions
             {
-                TypeNameHandling = TypeNameHandling.Objects,
-                PreserveReferencesHandling = PreserveReferencesHandling.Objects,
-                ReferenceLoopHandling = ReferenceLoopHandling.Serialize,
+                ReferenceHandler = ReferenceHandler.Preserve,
             };
         }
-       
+
+        /// <summary>
+        /// The moniker for the derived <see cref="TraceContextBase"/> class.
+        /// </summary>
+        public string Type { get; set; }
+
         /// <summary>
         /// Start time of this telemetry
         /// </summary>
@@ -88,14 +90,14 @@ namespace DurableTask.Core
         public abstract TimeSpan Duration { get; }
 
         [JsonIgnore]
-        static JsonSerializerSettings CustomJsonSerializerSettings { get; }
+        static JsonSerializerOptions CustomJsonSerializerOptions { get; }
 
         /// <summary>
         /// Serializable Json string of TraceContext
         /// </summary>
         [JsonIgnore]
         public string SerializableTraceContext => 
-            JsonConvert.SerializeObject(this, CustomJsonSerializerSettings);
+            JsonSerializer.Serialize(this, CustomJsonSerializerOptions);
 
         /// <summary>
         /// Telemetry.Id Used for sending telemetry. refer this URL
@@ -169,27 +171,9 @@ namespace DurableTask.Core
                 return TraceContextFactory.Empty;
             }
 
-            // Obtain typename and validate that it is a subclass of `TraceContextBase`.
-            // If it's not, we throw an exception.
-            Type traceContextType = null;
-            Type traceContextBasetype = typeof(TraceContextBase);
-
-            JToken typeName = JObject.Parse(json)["$type"];
-            traceContextType = Type.GetType(typeName.Value<string>());
-            if (!traceContextType.IsSubclassOf(traceContextBasetype))
-            {
-                string typeNameStr = typeName.ToString();
-                string baseNameStr = traceContextBasetype.ToString();
-                throw new Exception($"Serialized TraceContext type ${typeNameStr} is not a subclass of ${baseNameStr}." +
-                    "This probably means something went wrong in serializing the TraceContext.");
-            }
-
-            // De-serialize the object now that we now it's safe
-            var restored = JsonConvert.DeserializeObject(
-                json,
-                traceContextType,
-                CustomJsonSerializerSettings) as TraceContextBase;
+            TraceContextBase restored = JsonSerializer.Deserialize<TraceContextBase>(json, CustomJsonSerializerOptions);
             restored.OrchestrationTraceContexts = new Stack<TraceContextBase>(restored.OrchestrationTraceContexts);
+
             return restored;
         }
     }

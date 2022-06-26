@@ -36,13 +36,8 @@ namespace DurableTask.ServiceBus.Common.Abstraction
     {
         internal static readonly TimeSpan TokenTimeToLive = TimeSpan.FromDays(30);
 
-        public static Task<Message> GetBrokeredMessageFromObjectAsync(object serializableObject, CompressionSettings compressionSettings)
-        {
-            return GetBrokeredMessageFromObjectAsync(serializableObject, compressionSettings, new ServiceBusMessageSettings(), null, null, null, DateTimeUtils.MinDateTime);
-        }
-
         public static async Task<Message> GetBrokeredMessageFromObjectAsync(
-            object serializableObject,
+            TaskMessage serializableObject,
             CompressionSettings compressionSettings,
             ServiceBusMessageSettings messageSettings,
             OrchestrationInstance instance,
@@ -263,7 +258,7 @@ namespace DurableTask.ServiceBus.Common.Abstraction
             byte[] serializedBytes = Utils.ReadBytesFromStream(objectStream);
             try
             {
-                return Utils.ReadObjectFromByteArray<T>(serializedBytes);
+                return Utils.ReadObjectFromUtf8Json<T>(serializedBytes);
             }
             catch (JsonSerializationException jex) when (typeof(T) == typeof(TaskMessage))
             {
@@ -273,7 +268,7 @@ namespace DurableTask.ServiceBus.Common.Abstraction
                 StateMessage stateMessage = null;
                 try
                 {
-                    stateMessage = Utils.ReadObjectFromByteArray<StateMessage>(serializedBytes);
+                    stateMessage = Utils.ReadObjectFromUtf8Json<StateMessage>(serializedBytes);
                 }
                 catch (JsonSerializationException)
                 {

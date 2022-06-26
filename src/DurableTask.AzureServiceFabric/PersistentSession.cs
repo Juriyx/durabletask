@@ -13,11 +13,15 @@
 
 namespace DurableTask.AzureServiceFabric
 {
+    using System;
     using System.Collections.Generic;
     using System.Collections.Immutable;
     using System.Runtime.Serialization;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
     using DurableTask.Core;
     using DurableTask.Core.History;
+    using DurableTask.Core.Serializing;
 
     [DataContract]
     sealed partial class PersistentSession : IExtensibleDataObject
@@ -65,6 +69,34 @@ namespace DurableTask.AzureServiceFabric
 
         public ImmutableList<HistoryEvent> SessionState => this.sessionState.ToImmutableList();
 
-        public ExtensionDataObject ExtensionData { get; set; }
+        [JsonIgnore]
+        [Obsolete("XML serialization has been deprecated.")]
+        public ExtensionDataObject ExtensionData
+        {
+            get => _extensionData?.Xml;
+            set
+            {
+                if (_extensionData == null)
+                    _extensionData = new ExtensionData(value);
+                else
+                    _extensionData.Xml = value;
+            }
+        }
+
+        [IgnoreDataMember]
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> JsonExtensionData
+        {
+            get => _extensionData?.Json;
+            set
+            {
+                if (_extensionData == null)
+                    _extensionData = new ExtensionData(value);
+                else
+                    _extensionData.Json = value;
+            }
+        }
+
+        private ExtensionData _extensionData;
     }
 }

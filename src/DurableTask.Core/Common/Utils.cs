@@ -101,16 +101,17 @@ namespace DurableTask.Core.Common
         /// <summary>
         /// Serializes and appends the supplied object to the supplied stream
         /// </summary>
-        public static void WriteObjectToStream(Stream objectStream, object obj)
+        public static void WriteObjectToStream<T>(Stream objectStream, T obj)
         {
             if (objectStream == null || !objectStream.CanWrite || !objectStream.CanSeek)
             {
                 throw new ArgumentException("stream is not seekable or writable", nameof(objectStream));
             }
 
-            byte[] serializedBytes = Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(obj, ObjectJsonOptions));
 
-            objectStream.Write(serializedBytes, 0, serializedBytes.Length);
+            using (Utf8JsonWriter writer = new Utf8JsonWriter(objectStream))
+                JsonSerializer.Serialize(obj, DefaultSerializerOptions);
+
             objectStream.Position = 0;
         }
 
@@ -140,9 +141,9 @@ namespace DurableTask.Core.Common
         /// <summary>
         /// Reads and deserializes an Object from the supplied stream
         /// </summary>
-        public static T ReadObjectFromStream<T>(Stream objectStream)
+        public static T ReadObjectFromUtf8Json<T>(Stream objectStream)
         {
-            return ReadObjectFromByteArray<T>(ReadBytesFromStream(objectStream));
+            return ReadObjectFromUtf8Json<T>(ReadBytesFromStream(objectStream));
         }
 
         /// <summary>
@@ -167,11 +168,10 @@ namespace DurableTask.Core.Common
         /// <summary>
         /// Deserializes an Object from the supplied bytes
         /// </summary>
-        public static T ReadObjectFromByteArray<T>(byte[] serializedBytes)
+        public static T ReadObjectFromUtf8Json<T>(byte[] serializedBytes)
         {
-            return JsonConvert.DeserializeObject<T>(
-                                Encoding.UTF8.GetString(serializedBytes),
-                                ObjectJsonOptions);
+            Utf8JsonReader reader = new Utf8JsonReader(serializedBytes, new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
+            return JsonSerializer.Deserialize<T>(ref reader, DefaultSerializerOptions);
         }
 
         /// <summary>

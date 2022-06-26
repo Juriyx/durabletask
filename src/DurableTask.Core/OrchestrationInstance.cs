@@ -13,8 +13,13 @@
 
 namespace DurableTask.Core
 {
+    using System;
+    using System.Collections.Generic;
     using System.Diagnostics.CodeAnalysis;
     using System.Runtime.Serialization;
+    using System.Text.Json;
+    using System.Text.Json.Serialization;
+    using DurableTask.Core.Serializing;
 
     /// <summary>
     /// Represents the state of an orchestration instance
@@ -69,6 +74,37 @@ namespace DurableTask.Core
         /// <summary>
         /// Implementation for <see cref="IExtensibleDataObject.ExtensionData"/>.
         /// </summary>
-        public ExtensionDataObject ExtensionData { get; set; }
+        [JsonIgnore]
+        [Obsolete("XML serialization has been deprecated.")]
+        public ExtensionDataObject ExtensionData
+        {
+            get => _extensionData?.Xml;
+            set
+            {
+                if (_extensionData == null)
+                    _extensionData = new ExtensionData(value);
+                else
+                    _extensionData.Xml = value;
+            }
+        }
+
+        /// <summary>
+        /// Gets or sets additional data encoded in JSON that was not explicitly represented by the <see cref="OrchestrationInstance"/> type.
+        /// </summary>
+        [IgnoreDataMember]
+        [JsonExtensionData]
+        public Dictionary<string, JsonElement> JsonExtensionData
+        {
+            get => _extensionData?.Json;
+            set
+            {
+                if (_extensionData == null)
+                    _extensionData = new ExtensionData(value);
+                else
+                    _extensionData.Json = value;
+            }
+        }
+
+        private ExtensionData _extensionData;
     }
 }
