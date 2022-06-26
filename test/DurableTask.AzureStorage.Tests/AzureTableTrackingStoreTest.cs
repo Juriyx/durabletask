@@ -16,7 +16,7 @@ namespace DurableTask.AzureStorage.Tests
     using System;
     using System.Collections.Generic;
     using System.Linq;
-    using System.Text;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.AzureStorage.Monitoring;
@@ -27,7 +27,6 @@ namespace DurableTask.AzureStorage.Tests
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Table;
     using Moq;
-    using Newtonsoft.Json;
 
     [TestClass]
     public class AzureTableTrackingStoreTest
@@ -64,7 +63,7 @@ namespace DurableTask.AzureStorage.Tests
                 NextTableName = "corge",
             };
 
-            var inputTokenString = JsonConvert.SerializeObject(inputToken);
+            var inputTokenString = JsonSerializer.Serialize(inputToken);
 
             fixture.SetupQueryStateWithPagerWithInputToken(inputTokenString);
 
@@ -206,7 +205,7 @@ namespace DurableTask.AzureStorage.Tests
                     NextRowKey = "bar",
                     NextTableName = "baz",
                 };
-                this.ExpectedTokenObject = JsonConvert.SerializeObject(token);
+                this.ExpectedTokenObject = JsonSerializer.Serialize(token);
                 this.ExpectedResult.ContinuationToken = this.ExpectedTokenObject;
                 this.ExpectedResult.OrchestrationState = new List<OrchestrationState>()
                 {

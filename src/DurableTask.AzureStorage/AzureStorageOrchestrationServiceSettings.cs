@@ -209,11 +209,6 @@ namespace DurableTask.AzureStorage
         public bool UseLegacyPartitionManagement { get; set; } = false;
 
         /// <summary>
-        /// User serialization that will respect <see cref="IExtensibleDataObject"/>. Default is false.
-        /// </summary>
-        public bool UseDataContractSerialization { get; set; }
-
-        /// <summary>
         /// Gets or sets the optional <see cref="ILoggerFactory"/> to use for diagnostic logging.
         /// </summary>
         public ILoggerFactory LoggerFactory { get; set; } = NoOpLoggerFactory.Instance;

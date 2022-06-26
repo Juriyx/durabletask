@@ -18,11 +18,11 @@ namespace DurableTask.AzureStorage.Storage
     using System.Diagnostics;
     using System.Linq;
     using System.Text;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.AzureStorage.Monitoring;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Newtonsoft.Json;
 
     class Table
     {
@@ -249,8 +249,9 @@ namespace DurableTask.AzureStorage.Storage
 
             if (!string.IsNullOrEmpty(continuationToken))
             {
-                var tokenContent = Encoding.UTF8.GetString(Convert.FromBase64String(continuationToken));
-                tableContinuationToken = JsonConvert.DeserializeObject<TableContinuationToken>(tokenContent);
+                tableContinuationToken = JsonSerializer.Deserialize<TableContinuationToken>(
+                    Convert.FromBase64String(continuationToken),
+                    Utils.InternalSerializerOptions);
             }
 
             var stopwatch = new Stopwatch();
@@ -277,7 +278,7 @@ namespace DurableTask.AzureStorage.Storage
             string? newContinuationToken = null;
             if (segment.ContinuationToken != null)
             {
-                string tokenJson = JsonConvert.SerializeObject(segment.ContinuationToken);
+                string tokenJson = JsonSerializer.Serialize(segment.ContinuationToken, Utils.InternalSerializerOptions);
                 newContinuationToken = Convert.ToBase64String(Encoding.UTF8.GetBytes(tokenJson));
             }
 

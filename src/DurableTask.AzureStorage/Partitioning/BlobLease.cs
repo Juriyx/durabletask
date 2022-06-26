@@ -13,9 +13,8 @@
 
 namespace DurableTask.AzureStorage.Partitioning
 {
-    using System.Threading.Tasks;
+    using System.Text.Json.Serialization;
     using DurableTask.AzureStorage.Storage;
-    using Newtonsoft.Json;
 
     class BlobLease : Lease
     {

@@ -15,12 +15,13 @@ namespace DurableTask.AzureStorage.Tests
 {
     using System;
     using System.Collections.Generic;
-    using System.Configuration;
     using System.Diagnostics;
     using System.IO;
     using System.Linq;
     using System.Runtime.Serialization;
     using System.Text;
+    using System.Text.Json.Nodes;
+    using System.Text.Json.Serialization;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.AzureStorage.Tracking;
@@ -32,8 +33,6 @@ namespace DurableTask.AzureStorage.Tests
     using Microsoft.WindowsAzure.Storage;
     using Microsoft.WindowsAzure.Storage.Blob;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     [TestClass]
     public class AzureStorageScenarioTests
@@ -56,8 +55,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(StandardTimeout);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("World", JToken.Parse(status?.Input));
-                Assert.AreEqual("Hello, World!", JToken.Parse(status?.Output));
+                Assert.AreEqual("World", JsonNode.Parse(status?.Input));
+                Assert.AreEqual("Hello, World!", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -79,8 +78,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(StandardTimeout);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("World", JToken.Parse(status?.Input));
-                Assert.AreEqual("Hello, World!", JToken.Parse(status?.Output));
+                Assert.AreEqual("World", JsonNode.Parse(status?.Input));
+                Assert.AreEqual("Hello, World!", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -100,8 +99,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(StandardTimeout);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(10, JToken.Parse(status?.Input));
-                Assert.AreEqual(3628800, JToken.Parse(status?.Output));
+                Assert.AreEqual(10, JsonNode.Parse(status?.Input));
+                Assert.AreEqual(3628800, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -122,8 +121,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(StandardTimeout);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(10, JToken.Parse(status?.Input));
-                Assert.AreEqual(3628800, JToken.Parse(status?.Output));
+                Assert.AreEqual(10, JsonNode.Parse(status?.Input));
+                Assert.AreEqual(3628800, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -140,8 +139,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(10, JToken.Parse(status?.Input));
-                Assert.AreEqual(3628800, JToken.Parse(status?.Output));
+                Assert.AreEqual(10, JsonNode.Parse(status?.Input));
+                Assert.AreEqual(3628800, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -273,7 +272,7 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("OK", JToken.Parse(status?.Output));
+                Assert.AreEqual("OK", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -294,7 +293,7 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("OK", JToken.Parse(status?.Output));
+                Assert.AreEqual("OK", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -313,7 +312,7 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("OK", JToken.Parse(status?.Output));
+                Assert.AreEqual("OK", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -363,7 +362,7 @@ namespace DurableTask.AzureStorage.Tests
                 var state = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, state?.OrchestrationStatus);
-                Assert.AreEqual(customStatus, JToken.Parse(state?.Status));
+                Assert.AreEqual(customStatus, JsonNode.Parse(state?.Status));
 
                 await host.StopAsync();
             }
@@ -383,7 +382,7 @@ namespace DurableTask.AzureStorage.Tests
                 var state = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, state?.OrchestrationStatus);
-                Assert.AreEqual(null, JToken.Parse(state?.Status).Value<string>());
+                Assert.AreEqual(null, JsonNode.Parse(state?.Status).GetValue<string>());
 
                 await host.StopAsync();
             }
@@ -415,7 +414,7 @@ namespace DurableTask.AzureStorage.Tests
                 IList<OrchestrationState> results = await host.GetAllOrchestrationInstancesAsync();
                 Assert.AreEqual(1, results.Count);
 
-                string result = JToken.Parse(results.First(x => x.OrchestrationInstance.InstanceId == instanceId).Output).ToString();
+                string result = JsonNode.Parse(results.First(x => x.OrchestrationInstance.InstanceId == instanceId).Output).ToString();
                 Assert.AreEqual(message, result);
 
                 await client.PurgeInstanceHistory();
@@ -463,7 +462,7 @@ namespace DurableTask.AzureStorage.Tests
                 Assert.AreEqual("\"Done\"", results.First(x => x.OrchestrationInstance.InstanceId == firstInstanceId).Output);
                 Assert.AreEqual("\"Done\"", results.First(x => x.OrchestrationInstance.InstanceId == secondInstanceId).Output);
                 Assert.AreEqual("\"Done\"", results.First(x => x.OrchestrationInstance.InstanceId == thirdInstanceId).Output);
-                string result = JToken.Parse(results.First(x => x.OrchestrationInstance.InstanceId == fourthInstanceId).Output).ToString();
+                string result = JsonNode.Parse(results.First(x => x.OrchestrationInstance.InstanceId == fourthInstanceId).Output).ToString();
                 Assert.AreEqual(message, result);
 
                 List<HistoryStateEvent> firstHistoryEvents = await client.GetOrchestrationHistoryAsync(firstInstanceId);
@@ -674,7 +673,7 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(90));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(Environment.CurrentDirectory, JToken.Parse(status?.Input));
+                Assert.AreEqual(Environment.CurrentDirectory, JsonNode.Parse(status?.Input));
                 Assert.IsTrue(long.Parse(status?.Output) > 0L);
 
                 await host.StopAsync();
@@ -756,10 +755,10 @@ namespace DurableTask.AzureStorage.Tests
                 status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(10));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(3, JToken.Parse(status?.Output));
+                Assert.AreEqual(3, JsonNode.Parse(status?.Output));
 
                 // When using ContinueAsNew, the original input is discarded and replaced with the most recent state.
-                Assert.AreNotEqual(initialValue, JToken.Parse(status?.Input));
+                Assert.AreNotEqual(initialValue, JsonNode.Parse(status?.Input));
 
                 await host.StopAsync();
             }
@@ -871,14 +870,14 @@ namespace DurableTask.AzureStorage.Tests
                 status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(10));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                var result = JObject.Parse(status?.Output);
+                var result = JsonNode.Parse(status?.Output);
                 Assert.IsNotNull(result);
 
-                var input = JObject.Parse(status?.Input);
-                Assert.AreEqual(finalMessage, input["Item1"].Value<string>());
-                Assert.AreEqual(finalMessage.Length, input["Item2"].Value<int>());
-                Assert.AreEqual(finalMessage, result["Item1"].Value<string>());
-                Assert.AreEqual(counter, result["Item2"].Value<int>());
+                var input = JsonNode.Parse(status?.Input);
+                Assert.AreEqual(finalMessage, input["Item1"].GetValue<string>());
+                Assert.AreEqual(finalMessage.Length, input["Item2"].GetValue<int>());
+                Assert.AreEqual(finalMessage, result["Item1"].GetValue<string>());
+                Assert.AreEqual(counter, result["Item2"].GetValue<int>());
 
                 await host.StopAsync();
 
@@ -1206,7 +1205,7 @@ namespace DurableTask.AzureStorage.Tests
 
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("Approved", JToken.Parse(status?.Output));
+                Assert.AreEqual("Approved", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1235,7 +1234,7 @@ namespace DurableTask.AzureStorage.Tests
 
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(20));
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("Expired", JToken.Parse(status?.Output));
+                Assert.AreEqual("Expired", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1297,7 +1296,7 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(15));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(5, JToken.Parse(status?.Output));
+                Assert.AreEqual(5, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1423,7 +1422,7 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(60));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(message, JToken.Parse(status?.Output));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1449,7 +1448,7 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromMinutes(2));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(message, JToken.Parse(status?.Output));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1539,8 +1538,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromMinutes(2));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(message, JToken.Parse(status?.Input));
-                Assert.AreEqual(message, JToken.Parse(status?.Output));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Input));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1565,8 +1564,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromMinutes(2));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(message, JToken.Parse(status?.Input));
-                Assert.AreEqual(message, JToken.Parse(status?.Output));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Input));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1589,8 +1588,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromMinutes(2));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(message, JToken.Parse(status?.Input));
-                Assert.AreEqual(message, JToken.Parse(status?.Output));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Input));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1616,8 +1615,8 @@ namespace DurableTask.AzureStorage.Tests
                 status = (await client.GetStateAsync(status.OrchestrationInstance.InstanceId)).First();
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(message, JToken.Parse(status?.Input));
-                Assert.AreEqual(message, JToken.Parse(status?.Output));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Input));
+                Assert.AreEqual(message, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1684,7 +1683,7 @@ namespace DurableTask.AzureStorage.Tests
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
 
-                byte[] resultBytes = JObject.Parse(status?.Output).ToObject<byte[]>();
+                byte[] resultBytes = JsonNode.Parse(status?.Output).GetValue<byte[]>();
                 Assert.IsTrue(readBytes.SequenceEqual(resultBytes));
 
                 await host.StopAsync();
@@ -1716,7 +1715,7 @@ namespace DurableTask.AzureStorage.Tests
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
 
                 // Large message payloads may actually get bigger when stored in blob storage.
-                string result = JToken.Parse(status?.Output).ToString();
+                string result = JsonNode.Parse(status?.Output).ToString();
                 Assert.AreEqual(message, result);
 
                 await host.StopAsync();
@@ -1744,8 +1743,8 @@ namespace DurableTask.AzureStorage.Tests
                 var status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("One", JToken.Parse(status?.Input));
-                Assert.AreEqual("Hello, One!", JToken.Parse(status?.Output));
+                Assert.AreEqual("One", JsonNode.Parse(status?.Input));
+                Assert.AreEqual("Hello, One!", JsonNode.Parse(status?.Output));
 
                 client = await host.StartOrchestrationAsync(
                     typeof(Orchestrations.SayHelloWithActivity),
@@ -1754,8 +1753,8 @@ namespace DurableTask.AzureStorage.Tests
                 status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("Two", JToken.Parse(status?.Input));
-                Assert.AreEqual("Hello, Two!", JToken.Parse(status?.Output));
+                Assert.AreEqual("Two", JsonNode.Parse(status?.Input));
+                Assert.AreEqual("Hello, Two!", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1790,7 +1789,7 @@ namespace DurableTask.AzureStorage.Tests
                 status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(30));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual("Hello, NotNull!", JToken.Parse(status?.Output));
+                Assert.AreEqual("Hello, NotNull!", JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -1930,7 +1929,7 @@ namespace DurableTask.AzureStorage.Tests
                 status = await client.WaitForCompletionAsync(TimeSpan.FromSeconds(10));
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-                Assert.AreEqual(1, JToken.Parse(status?.Output));
+                Assert.AreEqual(1, JsonNode.Parse(status?.Output));
 
                 await host.StopAsync();
             }
@@ -2003,7 +2002,7 @@ namespace DurableTask.AzureStorage.Tests
 
                 Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
                 Assert.IsNotNull(status.Output);
-                Assert.AreEqual("True", JToken.Parse(status.Output));
+                Assert.AreEqual("True", JsonNode.Parse(status.Output));
                 await host.StopAsync();
             }
         }
@@ -2032,15 +2031,15 @@ namespace DurableTask.AzureStorage.Tests
                 await Task.WhenAll(statusStartingNow, statusStartingIn30Seconds);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, statusStartingNow.Result?.OrchestrationStatus);
-                Assert.AreEqual("Current Time!", JToken.Parse(statusStartingNow.Result?.Input));
+                Assert.AreEqual("Current Time!", JsonNode.Parse(statusStartingNow.Result?.Input));
                 Assert.IsNull(statusStartingNow.Result.ScheduledStartTime);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, statusStartingIn30Seconds.Result?.OrchestrationStatus);
-                Assert.AreEqual("Current Time!", JToken.Parse(statusStartingIn30Seconds.Result?.Input));
+                Assert.AreEqual("Current Time!", JsonNode.Parse(statusStartingIn30Seconds.Result?.Input));
                 Assert.AreEqual(expectedStartTime, statusStartingIn30Seconds.Result.ScheduledStartTime);
 
-                var startNowResult = (DateTime)JToken.Parse(statusStartingNow.Result?.Output);
-                var startIn30SecondsResult = (DateTime)JToken.Parse(statusStartingIn30Seconds.Result?.Output);
+                var startNowResult = (DateTime)JsonNode.Parse(statusStartingNow.Result?.Output);
+                var startIn30SecondsResult = (DateTime)JsonNode.Parse(statusStartingIn30Seconds.Result?.Output);
 
                 Assert.IsTrue(startIn30SecondsResult > startNowResult);
                 Assert.IsTrue(startIn30SecondsResult >= expectedStartTime);
@@ -2073,15 +2072,15 @@ namespace DurableTask.AzureStorage.Tests
                 await Task.WhenAll(statusStartingNow, statusStartingIn30Seconds);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, statusStartingNow.Result?.OrchestrationStatus);
-                Assert.AreEqual("Current Time!", JToken.Parse(statusStartingNow.Result?.Input));
+                Assert.AreEqual("Current Time!", JsonNode.Parse(statusStartingNow.Result?.Input));
                 Assert.IsNull(statusStartingNow.Result.ScheduledStartTime);
 
                 Assert.AreEqual(OrchestrationStatus.Completed, statusStartingIn30Seconds.Result?.OrchestrationStatus);
-                Assert.AreEqual("Current Time!", JToken.Parse(statusStartingIn30Seconds.Result?.Input));
+                Assert.AreEqual("Current Time!", JsonNode.Parse(statusStartingIn30Seconds.Result?.Input));
                 Assert.AreEqual(expectedStartTime, statusStartingIn30Seconds.Result.ScheduledStartTime);
 
-                var startNowResult = (DateTime)JToken.Parse(statusStartingNow.Result?.Output);
-                var startIn30SecondsResult = (DateTime)JToken.Parse(statusStartingIn30Seconds.Result?.Output);
+                var startNowResult = (DateTime)JsonNode.Parse(statusStartingNow.Result?.Output);
+                var startIn30SecondsResult = (DateTime)JsonNode.Parse(statusStartingIn30Seconds.Result?.Output);
 
                 Assert.IsTrue(startIn30SecondsResult > startNowResult);
                 Assert.IsTrue(startIn30SecondsResult >= expectedStartTime);
@@ -2749,7 +2748,7 @@ namespace DurableTask.AzureStorage.Tests
 
                 public class RequestInformation
                 {
-                    [JsonProperty("id")]
+                    [JsonPropertyName("id")]
                     public string RequestId { get; set; }
                     public string InstanceId { get; set; }
                 }

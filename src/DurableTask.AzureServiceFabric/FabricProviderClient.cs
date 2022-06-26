@@ -21,9 +21,6 @@ namespace DurableTask.AzureServiceFabric
     using DurableTask.Core;
     using DurableTask.Core.Serializing;
     using DurableTask.AzureServiceFabric.Stores;
-    using Microsoft.ServiceFabric.Data;
-    using Newtonsoft.Json;
-    using System.Text.Json;
 
     internal class FabricProviderClient : IFabricProviderClient
     {

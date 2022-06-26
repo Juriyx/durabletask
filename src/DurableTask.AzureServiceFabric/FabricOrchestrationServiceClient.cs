@@ -16,6 +16,7 @@ namespace DurableTask.AzureServiceFabric
     using System;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -28,8 +29,6 @@ namespace DurableTask.AzureServiceFabric
     using DurableTask.AzureServiceFabric.Tracing;
 
     using Microsoft.ServiceFabric.Data;
-
-    using Newtonsoft.Json;
 
     class FabricOrchestrationServiceClient : IOrchestrationServiceClient
     {
@@ -174,14 +173,15 @@ namespace DurableTask.AzureServiceFabric
             return stateInstance?.State;
         }
 
-        public Task<string> GetOrchestrationHistoryAsync(string instanceId, string executionId)
+        public async Task<string> GetOrchestrationHistoryAsync(string instanceId, string executionId)
         {
             instanceId.EnsureValidInstanceId();
 
             // Other implementations returns full history for the execution.
             // This implementation returns just the final history, i.e., state.
-            var result = JsonConvert.SerializeObject(this.instanceStore.GetOrchestrationStateAsync(instanceId, executionId));
-            return Task.FromResult(result);
+            return JsonSerializer.Serialize(
+                await this.instanceStore.GetOrchestrationStateAsync(instanceId, executionId),
+                Utils.InternalSerializerOptions);
         }
 
         public Task PurgeOrchestrationHistoryAsync(DateTime thresholdDateTimeUtc, OrchestrationStateTimeRangeFilterType timeRangeFilterType)

@@ -15,12 +15,11 @@ namespace DurableTask.AzureStorage.Tests
 {
     using System;
     using System.Diagnostics;
+    using System.Text.Json;
     using System.Text.RegularExpressions;
     using System.Threading.Tasks;
     using DurableTask.Core;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     class TestInstance<T>
     {
@@ -90,7 +89,7 @@ namespace DurableTask.AzureStorage.Tests
             {
                 if (this.input != null)
                 {
-                    Assert.AreEqual(JToken.FromObject(this.input).ToString(), JToken.Parse(state.Input).ToString());
+                    Assert.AreEqual(JsonSerializer.Serialize(this.input), state.Input);
                 }
                 else
                 {
@@ -115,10 +114,10 @@ namespace DurableTask.AzureStorage.Tests
                 {
                     // DTFx usually encodes outputs as JSON values. The exception is error messages.
                     // If this is an error message, we'll throw here and try the logic in the catch block.
-                    JToken.Parse(state.Output);
-                    Assert.AreEqual(JToken.FromObject(expectedOutput).ToString(Formatting.None), state.Output);
+                    
+                    Assert.AreEqual(JsonSerializer.Serialize(expectedOutput), state.Output);
                 }
-                catch (JsonReaderException)
+                catch (JsonException)
                 {
                     Assert.AreEqual(expectedOutput, state?.Output);
                 }

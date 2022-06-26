@@ -18,8 +18,9 @@ namespace DurableTask.AzureServiceFabric.Remote
     using System.Linq;
     using System.Net;
     using System.Net.Http;
-    using System.Net.Http.Formatting;
+    using System.Net.Http.Json;
     using System.Net.Sockets;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using System.Web;
@@ -28,9 +29,6 @@ namespace DurableTask.AzureServiceFabric.Remote
     using DurableTask.Core.Exceptions;
     using DurableTask.AzureServiceFabric.Exceptions;
     using DurableTask.AzureServiceFabric.Models;
-
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Linq;
 
     /// <summary>
     /// Allows to interact with a remote IOrchestrationServiceClient
@@ -154,7 +152,7 @@ namespace DurableTask.AzureServiceFabric.Remote
 
             var fragment = $"{this.GetOrchestrationFragment(instanceId)}?allExecutions={allExecutions}";
             var stateString = await this.GetStringResponseAsync(instanceId, fragment, CancellationToken.None);
-            var states = JsonConvert.DeserializeObject<IList<OrchestrationState>>(stateString);
+            var states = JsonSerializer.Deserialize<IList<OrchestrationState>>(stateString, Utils.InternalSerializerOptions);
             return states;
         }
 
@@ -175,7 +173,7 @@ namespace DurableTask.AzureServiceFabric.Remote
 
             var fragment = $"{this.GetOrchestrationFragment(instanceId)}?executionId={executionId}";
             var stateString = await this.GetStringResponseAsync(instanceId, fragment, CancellationToken.None);
-            var state = JsonConvert.DeserializeObject<OrchestrationState>(stateString);
+            var state = JsonSerializer.Deserialize<OrchestrationState>(stateString, Utils.InternalSerializerOptions);
             return state;
         }
 
@@ -299,16 +297,11 @@ namespace DurableTask.AzureServiceFabric.Remote
             }
         }
 
-        private async Task PutJsonAsync(string instanceId, string fragment, object @object, CancellationToken cancellationToken)
+        private async Task PutJsonAsync<T>(string instanceId, string fragment, T value, CancellationToken cancellationToken)
         {
-            var mediaFormatter = new JsonMediaTypeFormatter()
-            {
-                SerializerSettings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.All }
-            };
-
             using (var result = await this.ExecuteRequestWithRetriesAsync(
                 instanceId,
-                async (baseUri) => await this.HttpClient.PutAsync(new Uri(baseUri, fragment), @object, mediaFormatter),
+                baseUri => this.HttpClient.PutAsJsonAsync(new Uri(baseUri, fragment), value, Utils.InternalSerializerOptions, cancellationToken),
                 cancellationToken))
             {
 
@@ -336,8 +329,8 @@ namespace DurableTask.AzureServiceFabric.Remote
         private string GetDefaultEndPoint(string endpoint)
         {
             // sample endpoint - {"Endpoints":{"":"http:\/\/10.91.42.35:30001"}}
-            var jObject = JObject.Parse(endpoint);
-            var defaultEndPoint = jObject["Endpoints"][Constants.TaskHubProxyServiceName].ToString();
+            var obj = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(endpoint, Utils.InternalSerializerOptions);
+            var defaultEndPoint = obj["Endpoints"].GetProperty(Constants.TaskHubProxyServiceName).GetString();
             return defaultEndPoint;
         }
 

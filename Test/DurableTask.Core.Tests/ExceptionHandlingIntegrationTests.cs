@@ -15,11 +15,11 @@ namespace DurableTask.Core.Tests
 {
     using System;
     using System.Diagnostics;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using DurableTask.Core.Exceptions;
     using DurableTask.Emulator;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Newtonsoft.Json;
 
     [TestClass]
     public class ExceptionHandlingIntegrationTests
@@ -61,14 +61,14 @@ namespace DurableTask.Core.Tests
             if (mode == ErrorPropagationMode.SerializeExceptions)
             {
                 // The exception should be deserializable
-                InvalidOperationException e = JsonConvert.DeserializeObject<InvalidOperationException>(state.Output);
+                InvalidOperationException e = JsonSerializer.Deserialize<InvalidOperationException>(state.Output)!;
                 Assert.IsNotNull(e);
                 Assert.AreEqual("This is a test exception", e.Message);
             }
             else if (mode == ErrorPropagationMode.UseFailureDetails)
             {
                 // The failure details should contain the relevant exception metadata
-                FailureDetails details = JsonConvert.DeserializeObject<FailureDetails>(state.Output);
+                FailureDetails details = JsonSerializer.Deserialize<FailureDetails>(state.Output)!;
                 Assert.IsNotNull(details);
                 Assert.AreEqual(typeof(InvalidOperationException).FullName, details.ErrorType);
                 Assert.IsTrue(details.IsCausedBy<InvalidOperationException>());
@@ -106,7 +106,7 @@ namespace DurableTask.Core.Tests
             Assert.IsNotNull(state.Output, "No output was returned!");
 
             // The orchestration is written in such a way that there should be only one call into the retry policy
-            int retryPolicyInvokedCount = JsonConvert.DeserializeObject<int>(state.Output);
+            int retryPolicyInvokedCount = JsonSerializer.Deserialize<int>(state.Output);
             Assert.AreEqual(1, retryPolicyInvokedCount);
         }
 

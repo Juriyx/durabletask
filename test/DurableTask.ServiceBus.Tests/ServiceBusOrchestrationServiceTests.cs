@@ -15,12 +15,12 @@ namespace DurableTask.ServiceBus.Tests
 {
     using System;
     using System.Collections.Generic;
+    using System.Text.Json.Nodes;
     using System.Threading.Tasks;
     using DurableTask.Core;
     using DurableTask.Core.Exceptions;
     using DurableTask.Test.Orchestrations;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Newtonsoft.Json.Linq;
 
     [TestClass]
     public class ServiceBusOrchestrationServiceTests
@@ -110,10 +110,10 @@ namespace DurableTask.ServiceBus.Tests
             status = await client.WaitForOrchestrationAsync(temp, TimeSpan.FromSeconds(10));
 
             Assert.AreEqual(OrchestrationStatus.Completed, status?.OrchestrationStatus);
-            Assert.AreEqual(3, JToken.Parse(status?.Output));
+            Assert.AreEqual(3, JsonNode.Parse(status?.Output));
 
             // When using ContinueAsNew, the original input is discarded and replaced with the most recent state.
-            Assert.AreNotEqual(initialValue, JToken.Parse(status?.Input));
+            Assert.AreNotEqual(initialValue, JsonNode.Parse(status?.Input));
         }
 
         [TestMethod]

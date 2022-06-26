@@ -18,12 +18,10 @@ namespace DurableTask.AzureStorage
     using System.IO;
     using System.IO.Compression;
     using System.Reflection;
-    using System.Runtime.Serialization;
     using System.Text;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using DurableTask.AzureStorage.Storage;
-    using Newtonsoft.Json;
-    using Newtonsoft.Json.Serialization;
 
     /// <summary>
     /// The message manager for messages from MessageData, and DynamicTableEntities
@@ -38,7 +36,6 @@ namespace DurableTask.AzureStorage
         readonly AzureStorageOrchestrationServiceSettings settings;
         readonly AzureStorageClient azureStorageClient;
         readonly BlobContainer blobContainer;
-        readonly JsonSerializerSettings taskMessageSerializerSettings;
 
         bool containerInitialized;
 
@@ -50,20 +47,6 @@ namespace DurableTask.AzureStorage
             this.settings = settings;
             this.azureStorageClient = azureStorageClient;
             this.blobContainer = this.azureStorageClient.GetBlobContainerReference(blobContainerName);
-            this.taskMessageSerializerSettings = new JsonSerializerSettings
-            {
-                TypeNameHandling = TypeNameHandling.Objects,
-#if NETSTANDARD2_0
-                SerializationBinder = new TypeNameSerializationBinder(),
-#else
-                Binder = new TypeNameSerializationBinder(),
-#endif
-            };
-
-            if (this.settings.UseDataContractSerialization)
-            {
-                this.taskMessageSerializerSettings.Converters.Add(new DataContractJsonConverter());
-            }
         }
 
         public async Task<bool> EnsureContainerAsync()
@@ -88,7 +71,7 @@ namespace DurableTask.AzureStorage
 
         public async Task<string> SerializeMessageDataAsync(MessageData messageData)
         {
-            string rawContent = JsonConvert.SerializeObject(messageData, this.taskMessageSerializerSettings);
+            string rawContent = JsonSerializer.Serialize(messageData, Utils.InternalSerializerOptions);
             messageData.TotalMessageSizeBytes = Encoding.UTF8.GetByteCount(rawContent);
             MessageFormatFlags messageFormat = this.GetMessageFormatFlags(messageData);
 
@@ -102,10 +85,10 @@ namespace DurableTask.AzureStorage
 
                 // Create a "wrapper" message which has the blob name but not a task message.
                 var wrapperMessageData = new MessageData { CompressedBlobName = blobName };
-                return JsonConvert.SerializeObject(wrapperMessageData, this.taskMessageSerializerSettings);
+                return JsonSerializer.Serialize(wrapperMessageData, Utils.InternalSerializerOptions);
             }
 
-            return JsonConvert.SerializeObject(messageData, this.taskMessageSerializerSettings);
+            return JsonSerializer.Serialize(messageData, Utils.InternalSerializerOptions);
         }
 
         /// <summary>
@@ -128,16 +111,16 @@ namespace DurableTask.AzureStorage
 
         public async Task<MessageData> DeserializeQueueMessageAsync(QueueMessage queueMessage, string queueName)
         {
-            MessageData envelope = JsonConvert.DeserializeObject<MessageData>(
+            MessageData envelope = JsonSerializer.Deserialize<MessageData>(
                 queueMessage.Message,
-                this.taskMessageSerializerSettings);
+                Utils.InternalSerializerOptions);
 
             if (!string.IsNullOrEmpty(envelope.CompressedBlobName))
             {
                 string decompressedMessage = await this.DownloadAndDecompressAsBytesAsync(envelope.CompressedBlobName);
-                envelope = JsonConvert.DeserializeObject<MessageData>(
+                envelope = JsonSerializer.Deserialize<MessageData>(
                     decompressedMessage,
-                    this.taskMessageSerializerSettings);
+                    Utils.InternalSerializerOptions);
                 envelope.MessageFormat = MessageFormatFlags.StorageBlob;
             }
 
@@ -288,59 +271,6 @@ namespace DurableTask.AzureStorage
             }
 
             return storageOperationCount;
-        }
-    }
-
-#if NETSTANDARD2_0
-    class TypeNameSerializationBinder : ISerializationBinder
-    {
-        public void BindToName(Type serializedType, out string assemblyName, out string typeName)
-        {
-            TypeNameSerializationHelper.BindToName(serializedType, out assemblyName, out typeName);
-        }
-
-        public Type BindToType(string assemblyName, string typeName)
-        {
-            return TypeNameSerializationHelper.BindToType(assemblyName, typeName);
-        }
-    }
-#else
-    class TypeNameSerializationBinder : SerializationBinder
-    {
-        public override void BindToName(Type serializedType, out string assemblyName, out string typeName)
-        {
-            TypeNameSerializationHelper.BindToName(serializedType, out assemblyName, out typeName);
-        }
-
-        public override Type BindToType(string assemblyName, string typeName)
-        {
-            return TypeNameSerializationHelper.BindToType(assemblyName, typeName);
-        }
-    }
-#endif
-    static class TypeNameSerializationHelper
-    {
-        static readonly Assembly DurableTaskCore = typeof(DurableTask.Core.TaskMessage).Assembly;
-        static readonly Assembly DurableTaskAzureStorage = typeof(AzureStorageOrchestrationService).Assembly;
-
-        public static void BindToName(Type serializedType, out string assemblyName, out string typeName)
-        {
-            assemblyName = null;
-            typeName = serializedType.FullName;
-        }
-
-        public static Type BindToType(string assemblyName, string typeName)
-        {
-            if (typeName.StartsWith("DurableTask.Core"))
-            {
-                return DurableTaskCore.GetType(typeName, throwOnError: true);
-            }
-            else if (typeName.StartsWith("DurableTask.AzureStorage"))
-            {
-                return DurableTaskAzureStorage.GetType(typeName, throwOnError: true);
-            }
-
-            return Type.GetType(typeName, throwOnError: true);
         }
     }
 }

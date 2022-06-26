@@ -15,9 +15,9 @@ namespace DurableTask.Samples.SumOfSquares
 {
     using System;
     using System.Collections.Generic;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using DurableTask.Core;
-    using Newtonsoft.Json.Linq;
 
     public class SumOfSquaresOrchestration : TaskOrchestration<int, string>
     {
@@ -30,28 +30,25 @@ namespace DurableTask.Samples.SumOfSquares
 
             var sum = 0;
             var chunks = new List<Task<int>>();
-            JArray data = JArray.Parse(input);
+            JsonElement data = JsonSerializer.Deserialize<JsonElement>(input, new JsonSerializerOptions { ReadCommentHandling = JsonCommentHandling.Skip });
             ////var resultChunks = new List<int>();
 
-            foreach (JToken item in data)
+            foreach (JsonElement item in data.EnumerateArray())
             {
                 // use resultChunks for sync processing, chunks for async
-                switch (item.Type)
+                switch (item.ValueKind)
                 {
-                    case JTokenType.Array:
-                        Task<int> subOrchestration = context.CreateSubOrchestrationInstance<int>(typeof(SumOfSquaresOrchestration), item.ToString(Newtonsoft.Json.Formatting.None));
+                    case JsonValueKind.Array:
+                        Task<int> subOrchestration = context.CreateSubOrchestrationInstance<int>(typeof(SumOfSquaresOrchestration), item.GetRawText());
                         chunks.Add(subOrchestration);
-                        ////resultChunks.Add(await context.CreateSubOrchestrationInstance<int>(typeof(SumOfSquaresOrchestration), item.ToString(Newtonsoft.Json.Formatting.None)));
                         break;
-                    case JTokenType.Integer:
-                        Task<int> activity = context.ScheduleTask<int>(typeof(SumOfSquaresTask), (int)item);
+                    case JsonValueKind.Number:
+                        Task<int> activity = context.ScheduleTask<int>(typeof(SumOfSquaresTask), item.GetInt32());
                         chunks.Add(activity);
                         ////resultChunks.Add(await context.ScheduleTask<int>(typeof(SumOfSquaresTask), (int)item));
                         break;
-                    case JTokenType.Comment:
-                        break;
                     default:
-                        throw new InvalidOperationException($"Invalid input: {item.Type}");
+                        throw new InvalidOperationException($"Invalid input: {item.ValueKind}");
                 }
             }
 

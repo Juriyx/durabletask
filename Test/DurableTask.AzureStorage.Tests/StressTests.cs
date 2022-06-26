@@ -17,11 +17,11 @@ namespace DurableTask.AzureStorage.Tests
     using System.Collections.Concurrent;
     using System.Collections.Generic;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.Core;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Newtonsoft.Json;
 
     [TestClass]
     public class StressTests
@@ -105,10 +105,10 @@ namespace DurableTask.AzureStorage.Tests
             if (useSameInstanceId)
             {
                 // Make sure each instance is exactly the same
-                string firstInstanceJson = JsonConvert.SerializeObject(finalStates[0]);
+                string firstInstanceJson = JsonSerializer.Serialize(finalStates[0]);
                 foreach (OrchestrationState state in finalStates.Skip(1))
                 {
-                    string json = JsonConvert.SerializeObject(state);
+                    string json = JsonSerializer.Serialize(state);
                     Assert.AreEqual(firstInstanceJson, json, "Expected that all instances have the same data.");
                 }
             }

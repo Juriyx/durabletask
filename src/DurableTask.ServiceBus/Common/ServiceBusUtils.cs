@@ -19,6 +19,7 @@ namespace DurableTask.ServiceBus.Common.Abstraction
     using System.IO;
     using System.Runtime.ExceptionServices;
     using System.Runtime.Serialization;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using DurableTask.Core;
     using DurableTask.Core.Common;
@@ -27,7 +28,6 @@ namespace DurableTask.ServiceBus.Common.Abstraction
     using DurableTask.Core.Tracing;
     using DurableTask.Core.Tracking;
     using DurableTask.ServiceBus.Settings;
-    using Newtonsoft.Json;
 #if NETSTANDARD2_0
     using Microsoft.Azure.ServiceBus.InteropExtensions;
 #endif
@@ -260,7 +260,7 @@ namespace DurableTask.ServiceBus.Common.Abstraction
             {
                 return Utils.ReadObjectFromUtf8Json<T>(serializedBytes);
             }
-            catch (JsonSerializationException jex) when (typeof(T) == typeof(TaskMessage))
+            catch (JsonException jex) when (typeof(T) == typeof(TaskMessage))
             {
                 //If deserialization to TaskMessage fails attempt to deserialize to the now deprecated StateMessage type
 #pragma warning disable 618
@@ -270,7 +270,7 @@ namespace DurableTask.ServiceBus.Common.Abstraction
                 {
                     stateMessage = Utils.ReadObjectFromUtf8Json<StateMessage>(serializedBytes);
                 }
-                catch (JsonSerializationException)
+                catch (JsonException)
                 {
                     originalException.Throw();
                 }

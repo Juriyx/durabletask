@@ -15,10 +15,10 @@ namespace DurableTask.AzureStorage.Partitioning
 {
     using System;
     using System.Net;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.AzureStorage.Storage;
-    using Newtonsoft.Json;
 
     /// <summary>
     /// Class responsible for starting and stopping the partition manager. Also implements the app lease feature to ensure a single app's partition manager is started at a time.
@@ -539,7 +539,7 @@ namespace DurableTask.AzureStorage.Partitioning
 
         async Task UpdateAppLeaseInfoBlob(AppLeaseInfo appLeaseInfo)
         {
-            string serializedInfo = JsonConvert.SerializeObject(appLeaseInfo);
+            string serializedInfo = JsonSerializer.Serialize(appLeaseInfo, Utils.InternalSerializerOptions);
             try
             {
                 await this.appLeaseInfoBlob.UploadTextAsync(serializedInfo);
@@ -556,7 +556,7 @@ namespace DurableTask.AzureStorage.Partitioning
             {
                 await appLeaseInfoBlob.FetchAttributesAsync();
                 string serializedEventHubInfo = await this.appLeaseInfoBlob.DownloadTextAsync();
-                return JsonConvert.DeserializeObject<AppLeaseInfo>(serializedEventHubInfo);
+                return JsonSerializer.Deserialize<AppLeaseInfo>(serializedEventHubInfo, Utils.InternalSerializerOptions);
             }
 
             return null;

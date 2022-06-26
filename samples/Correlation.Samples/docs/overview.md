@@ -36,7 +36,7 @@ The stack represents the current TraceContext of the orchestrator.
 
 A wrapper of [Activity](https://github.com/dotnet/corefx/blob/master/src/System.Diagnostics.DiagnosticSource/src/ActivityUserGuide.md) class. The Activity class is in charge of handling the correlation information of Application Insights. Activity is designed for in-memory execution. However, Orchestrator requires a replay. The execution is not in-memory. This class wraps the Activity to adopt orchestration execution. This class has a Stack called `OrchestrationTraceContexts.` It is a stack of request/dependency telemetry of orchestrator. 
 
-This class is serialized to queues. However, the default `Newtonsoft.Json` serializer can't support it. So we have a custom serializer on the `TraceContextBase` class. 
+This class is serialized to queues. However, the default `System.Text.Json.JsonSerializer` can't support it. So we have a custom serializer on the `TraceContextBase` class. 
 
 ### [CorrelationTraceClient](../../../src/DurableTask.Core/CorrelationTraceClient.cs)
 

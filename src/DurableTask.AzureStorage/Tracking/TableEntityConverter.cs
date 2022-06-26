@@ -19,8 +19,8 @@ namespace DurableTask.AzureStorage.Tracking
     using System.Diagnostics;
     using System.Reflection;
     using System.Runtime.Serialization;
+    using System.Text.Json;
     using Microsoft.WindowsAzure.Storage.Table;
-    using Newtonsoft.Json;
 
     /// <summary>
     /// Utility class for converting [DataContract] objects into DynamicTableEntity and back.
@@ -269,14 +269,14 @@ namespace DurableTask.AzureStorage.Tracking
                         getEntityPropertyFunc = o =>
                         {
                             object value = property != null ? property.GetValue(o) : field.GetValue(o);
-                            string json = value != null ? JsonConvert.SerializeObject(value) : null;
+                            string json = value != null ? JsonSerializer.Serialize(value, Utils.InternalSerializerOptions) : null;
                             return EntityProperty.GeneratePropertyForString(json);
                         };
 
                         setObjectPropertyFunc = (o, e) =>
                         {
                             string json = e.StringValue;
-                            object value = json != null ? JsonConvert.DeserializeObject(json, memberValueType) : null;
+                            object value = json != null ? JsonSerializer.Deserialize(json, memberValueType, Utils.InternalSerializerOptions) : null;
                             if (property != null)
                             {
                                 property.SetValue(o, value);

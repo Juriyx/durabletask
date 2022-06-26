@@ -16,7 +16,6 @@ namespace DurableTask.Core.Common
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Dynamic;
     using System.IO;
     using System.IO.Compression;
     using System.Linq;
@@ -170,8 +169,7 @@ namespace DurableTask.Core.Common
         /// </summary>
         public static T ReadObjectFromUtf8Json<T>(byte[] serializedBytes)
         {
-            Utf8JsonReader reader = new Utf8JsonReader(serializedBytes, new JsonReaderOptions { CommentHandling = JsonCommentHandling.Skip });
-            return JsonSerializer.Deserialize<T>(ref reader, InternalSerializerOptions);
+            return JsonSerializer.Deserialize<T>(serializedBytes, InternalSerializerOptions);
         }
 
         /// <summary>

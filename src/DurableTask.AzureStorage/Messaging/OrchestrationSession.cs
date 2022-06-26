@@ -15,12 +15,11 @@ namespace DurableTask.AzureStorage.Messaging
 {
     using System;
     using System.Collections.Generic;
-    using System.IO;
     using System.Linq;
+    using System.Text.Json;
     using System.Threading.Tasks;
     using DurableTask.Core;
     using DurableTask.Core.History;
-    using Newtonsoft.Json;
 
     sealed class OrchestrationSession : SessionBase, IOrchestrationSession
     {
@@ -200,24 +199,11 @@ namespace DurableTask.AzureStorage.Messaging
         {
             try
             {
-                JsonTextReader reader = new JsonTextReader(new StringReader(input));
-                reader.Read(); // JsonToken.StartObject
-                while (reader.Read() && reader.TokenType == JsonToken.PropertyName)
-                {
-                    switch (reader.Value)
-                    {
-                        case "$type":
-                        case "op":
-                        case "signal":
-                        case "input":
-                            reader.Read(); // skip these, they may appear before the id
-                            continue;
-                        case "id":
-                            return Guid.Parse(reader.ReadAsString());
-                        default:
-                            break;
-                    }
-                }
+                JsonElement obj = JsonSerializer.Deserialize<JsonElement>(input);
+                if (obj.ValueKind != JsonValueKind.Object || !obj.TryGetProperty("id", out JsonElement id))
+                    return null;
+
+                return Guid.Parse(id.GetString());
             }
             catch
             {

@@ -20,6 +20,7 @@ namespace DurableTask.AzureStorage
     using System.Linq;
     using System.Net;
     using System.Text;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.AzureStorage.Messaging;
@@ -32,7 +33,6 @@ namespace DurableTask.AzureStorage
     using DurableTask.Core.History;
     using DurableTask.Core.Query;
     using Microsoft.WindowsAzure.Storage;
-    using Newtonsoft.Json;
 
     /// <summary>
     /// Orchestration service provider for the Durable Task Framework which uses Azure Storage as the durable store.
@@ -1781,7 +1781,7 @@ namespace DurableTask.AzureStorage
                 instanceId,
                 executionId,
                 CancellationToken.None);
-            return JsonConvert.SerializeObject(history.Events);
+            return JsonSerializer.Serialize(history.Events, Utils.InternalSerializerOptions);
         }
 
         /// <summary>

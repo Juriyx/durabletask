@@ -15,6 +15,7 @@ namespace DurableTask.AzureServiceFabric
 {
     using System;
     using System.Diagnostics;
+    using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
 
@@ -23,6 +24,12 @@ namespace DurableTask.AzureServiceFabric
 
     internal static class Utils
     {
+        internal static readonly JsonSerializerOptions InternalSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+        };
+
         public static OrchestrationState BuildOrchestrationState(OrchestrationRuntimeState runtimeState)
         {
             return new OrchestrationState

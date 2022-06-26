@@ -26,7 +26,6 @@ namespace DurableTask.AzureStorage.Tests.Correlation
     using Microsoft.ApplicationInsights.DataContracts;
     using Microsoft.ApplicationInsights.Extensibility.Implementation;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Newtonsoft.Json;
 
     [TestClass]
     public class CorrelationScenarioTest
@@ -766,7 +765,7 @@ namespace DurableTask.AzureStorage.Tests.Correlation
 
                 var result = FilterOperationTelemetry(operationTelemetryList).ToList();
                 Debug.WriteLine(
-                    JsonConvert.SerializeObject(
+                    System.Text.Json.JsonSerializer.Serialize(
                         result.Select(
                             x => new
                             {

@@ -16,13 +16,11 @@ namespace DurableTask.AzureStorage.Tests
     using System;
     using System.Collections.Generic;
     using System.Diagnostics;
-    using System.Threading;
+    using System.Text.Json;
     using System.Threading.Tasks;
-    using DurableTask.AzureStorage.Tracking;
     using DurableTask.Core;
     using DurableTask.Core.History;
     using Microsoft.VisualStudio.TestTools.UnitTesting;
-    using Newtonsoft.Json;
 
     class TestOrchestrationClient
     {
@@ -171,7 +169,7 @@ namespace DurableTask.AzureStorage.Tests
             // However, we need to get all the history records for an instance id not for specific execution.
             AzureStorageOrchestrationService service = (AzureStorageOrchestrationService)this.client.ServiceClient;
             string historyString = await service.GetOrchestrationHistoryAsync(instanceId, null);
-            return JsonConvert.DeserializeObject<List<HistoryStateEvent>>(historyString);
+            return JsonSerializer.Deserialize<List<HistoryStateEvent>>(historyString);
         }
 
         public async Task<IList<OrchestrationState>> GetStateAsync(string instanceId)

@@ -17,6 +17,7 @@ namespace DurableTask.AzureStorage
     using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
+using System.Text.Json;
     using System.Threading;
     using System.Threading.Tasks;
     using DurableTask.Core;
@@ -30,6 +31,12 @@ namespace DurableTask.AzureStorage
 
         // DurableTask.Core has a public static variable that contains the app name
         public static readonly string AppName = DurableTask.Core.Common.Utils.AppName;
+
+        internal static readonly JsonSerializerOptions InternalSerializerOptions = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+        };
 
         public static async Task ParallelForEachAsync<TSource>(
             this IEnumerable<TSource> enumerable,
