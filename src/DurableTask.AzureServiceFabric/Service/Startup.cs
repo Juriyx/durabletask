@@ -58,9 +58,8 @@ namespace DurableTask.AzureServiceFabric.Service
             config.DependencyResolver = new DefaultDependencyResolver(GenerateServiceProvider());
             config.MessageHandlers.Add(new ActivityLoggingMessageHandler());
             config.IncludeErrorDetailPolicy = IncludeErrorDetailPolicy.Always;
-            config.Formatters.Remove(config.Formatters.XmlFormatter);
-            config.Formatters.Remove(config.Formatters.FormUrlEncodedFormatter);
-            config.Formatters.JsonFormatter.SerializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.All;
+            config.Formatters.Clear();
+            config.Formatters.Add(new SystemTextJsonMediaTypeFormatter(Utils.InternalSerializerOptions));
             appBuilder.UseWebApi(config);
         }
     }
