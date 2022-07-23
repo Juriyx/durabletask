@@ -14,7 +14,10 @@
 namespace DurableTask.Core.Serializing
 {
     using System;
+    using System.Collections.Generic;
+    using System.Linq;
     using System.Text.Json;
+    using System.Text.Json.Nodes;
     using System.Text.Json.Serialization;
 
     /// <summary>
@@ -36,12 +39,16 @@ namespace DurableTask.Core.Serializing
                 return null;
             }
 
-            JsonElement value = JsonElement.ParseValue(ref reader);
+            JsonNode node = JsonNode.Parse(ref reader);
 
-            // Create target object based on JsonElement 
-            Type targetType = GetObjectType(value, options);
+            // Create target object based on JsonNode 
+            Type targetType = GetObjectType(node.AsObject(), options);
 
-            return (T)value.Deserialize(targetType, options);
+            // For old data serialized with $type, we need to remove it before performing
+            // the member for finally deserializing the object in case preserve mode is enabled
+            node = RemoveTypeProperties(node.AsObject());
+
+            return (T)node.Deserialize(targetType, options);
         }
 
         public override void Write(Utf8JsonWriter writer, T value, JsonSerializerOptions options)
@@ -50,11 +57,33 @@ namespace DurableTask.Core.Serializing
         /// <summary>
         ///     Gets the objectType based on properties in the JSON object
         /// </summary>
-        protected abstract Type GetObjectType(JsonElement element, JsonSerializerOptions options);
+        protected abstract Type GetObjectType(JsonObject node, JsonSerializerOptions options);
 
         /// <summary>
         ///     Gets the objectType based on the value.
         /// </summary>
         protected abstract Type GetObjectType(T value);
+
+        private static JsonNode RemoveTypeProperties(JsonObject obj)
+        {
+            // Remove if present
+            if (obj.Remove("$type"))
+            {
+                // In JSON.NET, arrays are serialized as objects and require some finesse to unwrap the array
+                if (!obj.ContainsKey("$id") && obj.TryGetPropertyValue("$value", out JsonNode arrayValue))
+                {
+                    return arrayValue;
+                }
+            }
+
+            // Recursively search each of the nested objects
+            List<string> candidates = obj.Where(x => x.Value is JsonObject).Select(x => x.Key).ToList();
+            foreach (string propertyName in candidates)
+            {
+                obj[propertyName] = RemoveTypeProperties(obj[propertyName].AsObject());
+            }
+
+            return obj;
+        }
     }
 }

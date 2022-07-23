@@ -95,7 +95,7 @@ namespace DurableTask.Core
                 if (i < parameterCount)
                 {
                     JsonElement element = jsonArray[i];
-                    inputParameters[i] = element.Deserialize(parameterType, Utils.InternalSerializerOptions);
+                    inputParameters[i] = element.Deserialize(parameterType, Utils.BackwardCompatibleOptions);
                 }
                 else
                 {

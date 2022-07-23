@@ -16,13 +16,14 @@ namespace DurableTask.Core.History
 {
     using System;
     using System.Text.Json;
+    using System.Text.Json.Nodes;
     using DurableTask.Core.Serializing;
 
     internal sealed class HistoryEventConverter : JsonCreationConverter<HistoryEvent>
     {
-        protected override Type GetObjectType(JsonElement element, JsonSerializerOptions options)
+        protected override Type GetObjectType(JsonObject node, JsonSerializerOptions options)
         {
-            if (element.TryGetProperty(nameof(HistoryEvent.EventType), out JsonElement property))
+            if (node.TryGetPropertyValue(nameof(HistoryEvent.EventType), out JsonNode? property))
                 return GetObjectType(property.Deserialize<EventType>(options));
 
             throw new JsonException($"Cannot find '{nameof(HistoryEvent.EventType)}' property.");

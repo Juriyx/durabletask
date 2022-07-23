@@ -15,16 +15,15 @@ namespace DurableTask.Core.Command
 {
     using System;
     using System.Text.Json;
+    using System.Text.Json.Nodes;
     using DurableTask.Core.Serializing;
 
     internal class OrchestrationActionConverter : JsonCreationConverter<OrchestratorAction>
     {
-        protected override Type GetObjectType(JsonElement element, JsonSerializerOptions options)
+        protected override Type GetObjectType(JsonObject node, JsonSerializerOptions options)
         {
-            if (element.TryGetProperty(nameof(OrchestratorAction.OrchestratorActionType), out JsonElement property))
-            {
+            if (node.TryGetPropertyValue(nameof(OrchestratorAction.OrchestratorActionType), out JsonNode property))
                 return GetObjectType(property.Deserialize<OrchestratorActionType>(options));
-            }
 
             throw new JsonException("Action Type not provided.");
         }

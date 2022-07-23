@@ -33,18 +33,11 @@ namespace DurableTask.Core
             OrchestrationTraceContexts = new Stack<TraceContextBase>();
         }
 
-        static TraceContextBase()
-        {
-            CustomJsonSerializerOptions = new JsonSerializerOptions
-            {
-                ReferenceHandler = ReferenceHandler.Preserve,
-            };
-        }
-
         /// <summary>
-        /// The moniker for the derived <see cref="TraceContextBase"/> class.
+        /// The type for the derived <see cref="TraceContextBase"/> class.
         /// </summary>
-        public string Type { get; set; }
+        [JsonInclude]
+        internal abstract TraceContextType Type { get; }
 
         /// <summary>
         /// Start time of this telemetry
@@ -90,7 +83,12 @@ namespace DurableTask.Core
         public abstract TimeSpan Duration { get; }
 
         [JsonIgnore]
-        static JsonSerializerOptions CustomJsonSerializerOptions { get; }
+        static JsonSerializerOptions CustomJsonSerializerOptions { get; } = new JsonSerializerOptions
+        {
+            PropertyNameCaseInsensitive = true,
+            ReadCommentHandling = JsonCommentHandling.Skip,
+            ReferenceHandler = ReferenceHandler.Preserve,
+        };
 
         /// <summary>
         /// Serializable Json string of TraceContext

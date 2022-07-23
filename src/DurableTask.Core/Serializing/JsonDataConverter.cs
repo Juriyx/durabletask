@@ -25,7 +25,7 @@ namespace DurableTask.Core.Serializing
         /// <summary>
         /// Default JsonDataConverter
         /// </summary>
-        public static readonly JsonDataConverter Default = new JsonDataConverter();
+        public static JsonDataConverter Default { get; } = new JsonDataConverter();
 
         readonly JsonSerializerOptions _options;
         readonly JsonSerializerOptions _indentedOptions;
@@ -34,7 +34,7 @@ namespace DurableTask.Core.Serializing
         /// Creates a new instance of the <see cref="JsonDataConverter"/> with default settings
         /// </summary>
         public JsonDataConverter()
-            : this(Utils.InternalSerializerOptions)
+            : this(Utils.BackwardCompatibleOptions)
         { }
 
         /// <summary>

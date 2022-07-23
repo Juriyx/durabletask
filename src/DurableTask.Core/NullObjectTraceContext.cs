@@ -14,8 +14,6 @@
 namespace DurableTask.Core
 {
     using System;
-    using System.Collections.Generic;
-    using System.Text;
 
     /// <summary>
     /// NullObjectTraceContext is for the behavior which is not supported the Distributed Tracing
@@ -30,6 +28,8 @@ namespace DurableTask.Core
         public override string TelemetryContextOperationId => "NullObjectTraceContextOperationId";
         /// <inheritdoc />
         public override string TelemetryContextOperationParentId => "NullObjectTraceContextParentId";
+        /// <inheritdoc />
+        internal override TraceContextType Type => TraceContextType.NullObject;
         /// <inheritdoc />
         public override void SetParentAndStart(TraceContextBase parentTraceContext)
         {

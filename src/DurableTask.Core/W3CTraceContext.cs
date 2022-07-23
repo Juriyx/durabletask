@@ -82,6 +82,11 @@ namespace DurableTask.Core
             }
         }
 
+        /// <summary>
+        /// The type of trace context.
+        /// </summary>
+        internal override TraceContextType Type => TraceContextType.W3C;
+
         /// <inheritdoc />
         public override void SetParentAndStart(TraceContextBase parentTraceContext)
         {

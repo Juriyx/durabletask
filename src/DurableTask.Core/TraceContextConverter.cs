@@ -14,39 +14,32 @@
 namespace DurableTask.Core
 {
     using System;
-using System.Collections.Generic;
     using System.Text.Json;
-    using DurableTask.Core.Command;
+    using System.Text.Json.Nodes;
     using DurableTask.Core.Serializing;
 
     internal sealed class TraceContextConverter : JsonCreationConverter<TraceContextBase>
     {
-        protected override Type GetObjectType(JsonElement element, JsonSerializerOptions options)
+        protected override Type GetObjectType(JsonObject obj, JsonSerializerOptions options)
 {
-            if (element.TryGetProperty(nameof(TraceContextBase.Type), out JsonElement property))
-                return GetObjectType(property.GetString());
-            else if (element.TryGetProperty("$type", out property))
-                return GetDeprecatedObjectType(Type.GetType(property.GetString()));
+            if (obj.TryGetPropertyValue(nameof(TraceContextBase.Type), out JsonNode property))
+                return GetObjectType(JsonSerializer.Deserialize<TraceContextType>(property, options));
+            else if (obj.TryGetPropertyValue("$type", out property))
+                return GetDeprecatedObjectType(Type.GetType(property.AsValue().GetValue<string>()));
 
             throw new JsonException("TraceContext 'Type' property not provided.");
         }
 
         protected override Type GetObjectType(TraceContextBase value)
-            => value.Type switch
-            {
-                nameof(HttpCorrelationProtocolTraceContext) => typeof(CreateTimerOrchestratorAction),
-                nameof(NullObjectTraceContext) => typeof(OrchestrationCompleteOrchestratorAction),
-                nameof(W3CTraceContext) => typeof(ScheduleTaskOrchestratorAction),
-                _ => throw new JsonException($"Unrecognized TraceContext type '{value.Type}'."),
-            };
+            => GetObjectType(value.Type);
 
-        private static Type GetObjectType(string value)
+        private static Type GetObjectType(TraceContextType value)
             => value switch
             {
-                nameof(HttpCorrelationProtocolTraceContext) => typeof(CreateTimerOrchestratorAction),
-                nameof(NullObjectTraceContext) => typeof(OrchestrationCompleteOrchestratorAction),
-                nameof(W3CTraceContext) => typeof(ScheduleTaskOrchestratorAction),
-                _ => throw new JsonException($"Unrecognized TraceContext type '{value}'."),
+                TraceContextType.HttpCorrelationProtocol => typeof(HttpCorrelationProtocolTraceContext),
+                TraceContextType.NullObject => typeof(NullObjectTraceContext),
+                TraceContextType.W3C => typeof(W3CTraceContext),
+                _ => throw new JsonException($"Invalid TraceContextType '{value}'."),
             };
 
         private static Type GetDeprecatedObjectType(Type type)
@@ -56,7 +49,7 @@ using System.Collections.Generic;
                 type == typeof(W3CTraceContext))
                 return type;
             else
-                throw new JsonException($"Unrecognized TraceContext type '{type}'.");
+                throw new JsonException($"Invalid TraceContextType '{type}'.");
         }
     }
 }

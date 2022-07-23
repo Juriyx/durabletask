@@ -14,10 +14,8 @@
 namespace DurableTask.Core
 {
     using System;
-    using System.Collections.Generic;
     using System.Diagnostics;
     using System.Linq;
-    using System.Text;
 
     /// <summary>
     /// HttpCorrelationProtocolTraceContext keep the correlation value with HTTP Correlation Protocol
@@ -38,6 +36,11 @@ namespace DurableTask.Core
         /// ParentId for parent
         /// </summary>
         public string ParentParentId { get; set; }
+
+        /// <summary>
+        /// The type of trace context.
+        /// </summary>
+        internal override TraceContextType Type => TraceContextType.HttpCorrelationProtocol;
 
         /// <inheritdoc />
         public override void SetParentAndStart(TraceContextBase parentTraceContext)
